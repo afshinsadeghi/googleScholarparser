@@ -6,7 +6,7 @@ This is a version of scholar.py that is debugged and extended by [me](http://sda
 
 In this version the output is not restricted to the first page of google. 
 Sample run:
-python scholar.py --pub "semantic" -c 100   --phrase "knowledge base"  --csv -page_number=2 > a.csv
+python scholar.py --pub "semantic" -c 10   --phrase "knowledge base"  --csv -page_number=2 > a.csv
 
 This tool is to help  scientific survies and I disclaim any responsibility on how it is being used. 
 
@@ -99,9 +99,12 @@ Example
 
  ./scholar.py --pub="semantic"    --phrase="knowledge base"  --page_number=2  --csv  ->a.csv
 
+## Instalation:
+before running , install beautifulsoup from command line by:
 
+pip install beautifulsoup4
 
-License
+## License
 -------
 
 scholar.py is using the standard [BSD license](http://opensource.org/licenses/BSD-2-Clause).
