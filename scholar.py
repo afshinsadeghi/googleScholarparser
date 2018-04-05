@@ -7,6 +7,8 @@ page. It is not a recursive crawler.
 # ChangeLog
 # ---------
 #
+# by Afshin 2.12  Added  page_number , for result pages for example --page_number=2
+#
 # 2.11  The Scholar site seems to have become more picky about the
 #       number of results requested. The default of 20 in scholar.py
 #       could cause HTTP 503 responses. scholar.py now doesn't request
@@ -238,7 +240,7 @@ class SoupKitchen(object):
 class ScholarConf(object):
     """Helper class for global settings."""
 
-    VERSION = '2.10'
+    VERSION = '2.12'
     LOG_LEVEL = 1
     MAX_PAGE_RESULTS = 10 # Current default for per-page results
     SCHOLAR_SITE = 'http://scholar.google.com'
@@ -634,6 +636,9 @@ class ScholarQuery(object):
         # in attrs, see below).
         self.num_results = None
 
+
+        self.start = None
+
         # Queries may have global result attributes, similar to
         # per-article attributes in ScholarArticle. The exact set of
         # attributes may differ by query type, but they all share the
@@ -644,6 +649,7 @@ class ScholarQuery(object):
         self.num_results = ScholarUtils.ensure_int(
             num_page_results,
             'maximum number of results on page must be numeric')
+
 
     def get_url(self):
         """
@@ -713,6 +719,7 @@ class ClusterScholarQuery(ScholarQuery):
     def __init__(self, cluster=None):
         ScholarQuery.__init__(self)
         self._add_attribute_type('num_results', 'Results', 0)
+        self._add_attribute_type('start', 'Start', 0)
         self.cluster = None
         self.set_cluster(cluster)
 
@@ -737,6 +744,8 @@ class ClusterScholarQuery(ScholarQuery):
         urlargs['num'] = ('&num=%d' % self.num_results
                           if self.num_results is not None else '')
 
+        urlargs['start'] = ('&start=%d&' % self.start
+                            if self.start is not None else '')
         return self.SCHOLAR_CLUSTER_URL % urlargs
 
 
@@ -746,6 +755,7 @@ class SearchScholarQuery(ScholarQuery):
     configure on the Scholar website, in the advanced search options.
     """
     SCHOLAR_QUERY_URL = ScholarConf.SCHOLAR_SITE + '/scholar?' \
+        + '%(start)s' \
         + 'as_q=%(words)s' \
         + '&as_epq=%(phrase)s' \
         + '&as_oq=%(words_some)s' \
@@ -763,7 +773,9 @@ class SearchScholarQuery(ScholarQuery):
     def __init__(self):
         ScholarQuery.__init__(self)
         self._add_attribute_type('num_results', 'Results', 0)
+        self._add_attribute_type('start', 'Start', 0)
         self.words = None # The default search behavior
+        self.start = None
         self.words_some = None # At least one of those words
         self.words_none = None # None of these words
         self.phrase = None
@@ -773,6 +785,12 @@ class SearchScholarQuery(ScholarQuery):
         self.timeframe = [None, None]
         self.include_patents = True
         self.include_citations = True
+
+    def set_page_number(self, page):
+        if page == 1:
+            self.start = 0
+        else:
+            self.start = (page - 1 ) * int(ScholarConf.MAX_PAGE_RESULTS)
 
     def set_words(self, words):
         """Sets words that *all* must be found in the result."""
@@ -861,7 +879,8 @@ class SearchScholarQuery(ScholarQuery):
         # server will not recognize them:
         urlargs['num'] = ('&num=%d' % self.num_results
                           if self.num_results is not None else '')
-
+        urlargs['start'] = ('&start=%d&' % self.start
+                          if self.start is not None else '')
         return self.SCHOLAR_QUERY_URL % urlargs
 
 
@@ -893,7 +912,7 @@ class ScholarSettings(object):
     def set_per_page_results(self, per_page_results):
         self.per_page_results = ScholarUtils.ensure_int(
             per_page_results, 'page results must be integer')
-        self.per_page_results = min(
+        self.per_page_results = max(
             self.per_page_results, ScholarConf.MAX_PAGE_RESULTS)
         self._is_configured = True
 
@@ -1017,8 +1036,7 @@ class ScholarQuerier(object):
         """
         self.clear_articles()
         self.query = query
-
-        html = self._get_http_response(url=query.get_url(),
+        html = self._get_http_response(url = query.get_url(),
                                        log_msg='dump of query response HTML',
                                        err_msg='results retrieval failed')
         if html is None:
@@ -1185,6 +1203,8 @@ scholar.py -c 5 -a "albert einstein" -t --none "quantum theory" --after 1970"""
                      help='Results must have appeared in or before given year')
     group.add_option('--no-patents', action='store_true', default=False,
                      help='Do not include patents in results')
+    group.add_option('--page_number',  type='int', default=1,
+                     help='number of page in the search results')
     group.add_option('--no-citations', action='store_true', default=False,
                      help='Do not include citations in results')
     group.add_option('-C', '--cluster-id', metavar='CLUSTER_ID', default=None,
@@ -1285,11 +1305,11 @@ scholar.py -c 5 -a "albert einstein" -t --none "quantum theory" --after 1970"""
             query.set_include_patents(False)
         if options.no_citations:
             query.set_include_citations(False)
-
+        if options.page_number:
+            query.set_page_number(options.page_number)
     if options.count is not None:
         options.count = min(options.count, ScholarConf.MAX_PAGE_RESULTS)
         query.set_num_page_results(options.count)
-
     querier.send_query(query)
 
     if options.csv:
