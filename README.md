@@ -6,7 +6,9 @@ This is a version of scholar.py that is debugged and extended by [me](http://sda
 
 In this version the output is not restricted to the first page of google. 
 Sample run:
-python scholar.py --pub "semantic" -c 10   --phrase "knowledge base"  --csv -page_number=2 > a.csv
+python scholar.py --pub "semantic" -c 10  --phrase "knowledge base"  --page_number=2 --csv  > a.csv
+
+and the result will be stored in a.csv with the delimiter "|". running without --csv > a.csv shows the result in the command line.
 
 This tool is to help  scientific survies and I disclaim any responsibility on how it is being used. 
 
