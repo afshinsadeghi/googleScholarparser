@@ -1,10 +1,16 @@
 scholar.py
 ==========
+### Disclaimer 
+This is a version of scholar.py that is debugged by me (Afshn.com) and 
+, the output is not restricted to the first page of google by this files works. 
+Sample run:
+python scholar.py --pub "semantic" -c 100   --phrase "knowledge base"  --csv -page_number=2 > a.csv
+
 
 scholar.py is a Python module that implements a querier and parser for Google Scholar's output. Its classes can be used independently, but it can also be invoked as a command-line tool.
 
 
-Forked from:
+This code is forked from:
 https://github.com/ckreibich/scholar.py/graphs/contributors
 
 Features
